@@ -1,0 +1,58 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+library(tidyverse)
+library(tabulizer)
+```
+```{r}
+read_table <- function(header)
+{
+  all_frames = list()
+  for(year in c(2019, 2023))
+  {
+    for(fname in list.files(as.character(year), '*.pdf'))
+    {
+      bydel <- fname |> str_replace("Valgprotokoll_bydelsutvalg_", "") |> str_replace(" 2019.pdf", "")  |> str_replace("Bydel ", "") |> str_replace(" - valgprotokoll.pdf", "")
+      tbls <- extract_tables(paste0(as.character(year), "/", fname), output="data.frame")
+      for(tbl in tbls)
+      {
+        if(identical(colnames(tbl), header))
+        {
+          break;
+        }
+      }
+      tbl <- tbl |> mutate(year=year, bydel=bydel)
+      all_frames <- append(all_frames, list(tbl))
+    }
+    
+  }
+  return(bind_rows(all_frames))
+}
+```
+
+
+```{r}
+partioppslutning <- read_table(c("Parti", "Forhånd", "Valgting", "Total"))
+partioppslutning
+
+```
+
+```{r}
+dftmp <- partioppslutning |> janitor::clean_names() |> filter(parti != "Totalt antall partifordelte stemmesedler") |> dplyr::rename(stemmer=total)
+df <- dftmp |> group_by(year, bydel) |> summarise(total_stemmer = sum(stemmer), .groups="drop") |> left_join(dftmp, by = join_by(year, bydel)) |> mutate(oppslutning = stemmer/total_stemmer)
+```
+
+```{r}
+(ggplot(df |> filter(parti=="Rødt") |> mutate(year=as.factor(year)), aes(x=bydel, y=oppslutning, colour=year))
+                                + geom_point()
+ + scale_y_continuous(labels = scales::percent)
+ + expand_limits(y=0, breaks=pretty_breaks(8))
+ + theme_minimal()
+ )
+```
+
