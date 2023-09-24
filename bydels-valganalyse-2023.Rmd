@@ -48,11 +48,22 @@ df <- dftmp |> group_by(year, bydel) |> summarise(total_stemmer = sum(stemmer), 
 ```
 
 ```{r}
-(ggplot(df |> filter(parti=="Rødt") |> mutate(year=as.factor(year)), aes(x=bydel, y=oppslutning, colour=year))
+(ggplot(df |> filter(parti=="Rødt") |> mutate(bydel = fct_reorder2(bydel, year, oppslutning, .desc=FALSE)) |> mutate(year=fct_rev(as.factor(year))), aes(x=bydel, y=oppslutning, colour=year))
                                 + geom_point()
- + scale_y_continuous(labels = scales::percent)
- + expand_limits(y=0, breaks=pretty_breaks(8))
+ + scale_y_continuous(labels = scales::percent, breaks=scales::pretty_breaks(8))
+ + expand_limits(y=0)
  + theme_minimal()
+ + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
  )
 ```
 
+```{r}
+(ggplot(df |> filter(bydel == "Alna" | bydel == "Stovner" | bydel == "Grorud") |> mutate(parti = fct_lump(parti, n=8, w=stemmer, other_level = "Andre")) |>  mutate(year=fct_rev(as.factor(year))), aes(x=bydel, y=oppslutning, colour=year))
+                                + geom_point()
+ + scale_y_continuous(labels = scales::percent, breaks=scales::pretty_breaks(4))
+ + expand_limits(y=0)
+ + theme_minimal()
+ + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ + facet_wrap(parti ~ ., scales="free_y")
+ )
+```
