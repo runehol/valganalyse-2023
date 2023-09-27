@@ -93,6 +93,11 @@ df <- dftmp |> group_by(year, bydel) |> summarise(total_stemmer = sum(stemmer), 
 ```
 
 ```{r}
+write_csv(df, "datasett.csv")
+```
+
+
+```{r}
 (ggplot(df |> filter(parti=="Rødt") |> mutate(bydel = fct_reorder(bydel, gjennomsnittsinntekt)) |> mutate(year=fct_rev(as.factor(year))), aes(x=gjennomsnittsinntekt, y=stemmeandel, colour=year))
                                 + geom_point()
  + scale_y_continuous(labels = scales::percent, breaks=scales::pretty_breaks(8))
