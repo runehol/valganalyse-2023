@@ -43,12 +43,57 @@ partioppslutning
 ```
 
 ```{r}
-dftmp <- partioppslutning |> janitor::clean_names() |> filter(parti != "Totalt antall partifordelte stemmesedler") |> dplyr::rename(stemmer=total)
-df <- dftmp |> group_by(year, bydel) |> summarise(total_stemmer = sum(stemmer), .groups="drop") |> left_join(dftmp, by = join_by(year, bydel)) |> mutate(oppslutning = stemmer/total_stemmer)
+bydel_info <- "bydel,gjennomsnittsinntekt
+Gamle Oslo,495000
+Grünerløkka,488000
+Sagene,507000
+St. Hanshaugen,516000
+Frogner,711000
+Ullern,812000
+Vestre Aker,882000
+Nordre Aker,640000
+Bjerke,471000
+Grorud,407000
+Stovner,391000
+Alna,415000
+Østensjø,524000
+Nordstrand,666000
+Søndre Nordstrand,410000
+"
+
+bydel_stats <- read_csv(bydel_info, col_types=c("c", "n")) |> mutate(bydel=fct_reorder(bydel, gjennomsnittsinntekt))
 ```
 
 ```{r}
-(ggplot(df |> filter(parti=="Rødt") |> mutate(bydel = fct_reorder2(bydel, year, oppslutning, .desc=FALSE)) |> mutate(year=fct_rev(as.factor(year))), aes(x=bydel, y=oppslutning, colour=year))
+parti_info <- "parti,parti_kort,politisk_pos
+Rødt,R,0
+SV - Sosialistisk Venstreparti,SV,1
+Arbeiderpartiet,Ap,2
+Miljøpartiet De Grønne,MDG,3
+Senterpartiet,Sp,4
+Partiet Sentrum,PS,5
+Venstre,V,6
+Kristelig Folkeparti,KrF,7
+Høyre,H,8
+Fremskrittspartiet,FrP,9
+Partiet Mot Bompenger,FNB,10
+Industri- og Næringspartiet,INP,11
+"
+
+parti_stats <- read_csv(parti_info, col_types=c("c", "c", "i")) |> mutate(parti=fct_reorder(parti,politisk_pos), parti_kort=fct_reorder(parti_kort, politisk_pos))
+```
+
+
+
+
+
+```{r}
+dftmp <- partioppslutning |> janitor::clean_names() |> filter(parti != "Totalt antall partifordelte stemmesedler") |> dplyr::rename(stemmer=total)
+df <- dftmp |> group_by(year, bydel) |> summarise(total_stemmer = sum(stemmer), .groups="drop") |> left_join(dftmp, by = join_by(year, bydel)) |> mutate(stemmeandel = stemmer/total_stemmer) |> left_join(bydel_stats, by=join_by(bydel)) |> right_join(parti_stats, by=join_by(parti)) |> mutate(bydel = fct_reorder(bydel, gjennomsnittsinntekt)) 
+```
+
+```{r}
+(ggplot(df |> filter(parti=="Rødt") |> mutate(bydel = fct_reorder(bydel, gjennomsnittsinntekt)) |> mutate(year=fct_rev(as.factor(year))), aes(x=gjennomsnittsinntekt, y=stemmeandel, colour=year))
                                 + geom_point()
  + scale_y_continuous(labels = scales::percent, breaks=scales::pretty_breaks(8))
  + expand_limits(y=0)
@@ -57,13 +102,29 @@ df <- dftmp |> group_by(year, bydel) |> summarise(total_stemmer = sum(stemmer), 
  )
 ```
 
-```{r}
-(ggplot(df |> filter(bydel == "Alna" | bydel == "Stovner" | bydel == "Grorud") |> mutate(parti = fct_lump(parti, n=8, w=stemmer, other_level = "Andre")) |>  mutate(year=fct_rev(as.factor(year))), aes(x=bydel, y=oppslutning, colour=year))
+```{r fig.width=10}
+(ggplot(df |> mutate(year=fct_rev(as.factor(year))), aes(x=bydel, y=stemmeandel, colour=year))
                                 + geom_point()
  + scale_y_continuous(labels = scales::percent, breaks=scales::pretty_breaks(4))
  + expand_limits(y=0)
  + theme_minimal()
  + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
- + facet_wrap(parti ~ ., scales="free_y")
+ + facet_wrap(parti_kort ~ ., scales="free_y")
+ + labs(title="Oppslutning per parti i bydeler", subtitle="Bydeler sortert etter gjennomsnittsinntekt", y="Stemmeandel", x="Bydel", color="År")
+ )
+```
+
+
+
+```{r fig.width=10}
+(ggplot(df |> filter(year==2023), aes(x=gjennomsnittsinntekt, y=stemmeandel, label=bydel))
+                                + geom_point()
+ #+ geom_text()
+ + scale_y_continuous(labels = scales::percent, breaks=scales::pretty_breaks(4))
+ + scale_x_continuous(labels = scales::label_comma(big.mark=" "))
+ + expand_limits(y=0)
+ + theme_minimal()
+ + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ + facet_wrap(parti_kort ~ ., scales="free_y")
  )
 ```
