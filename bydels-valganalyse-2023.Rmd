@@ -150,7 +150,7 @@ write_csv(df, "datasett.csv")
 
 ```
 
-```{r fig.width=6}
+```{r fig.width=8}
 (ggplot(df |> group_by(year, bydel) |> summarise(total_stemmer=mean(total_stemmer), .groups="drop")  |> mutate(year=fct_rev(as.factor(year))), aes(x=bydel, y=total_stemmer, colour=year))
  + geom_point()
  + geom_line(color="black", arrow = arrow(length = unit(0.15, "cm")), linewidth=0.2)
