@@ -104,15 +104,17 @@ df <- dftmp |> group_by(year, bydel) |> summarise(total_stemmer = sum(stemmer), 
 
 ```{r fig.width=10}
 (ggplot(df |> mutate(year=fct_rev(as.factor(year))), aes(x=bydel, y=stemmeandel, colour=year))
-                                + geom_point()
+ + geom_point()
+ + geom_line(color="black", arrow = arrow(length = unit(0.15, "cm")), linewidth=0.2)
  + scale_y_continuous(labels = scales::percent, breaks=scales::pretty_breaks(4))
  + expand_limits(y=0)
  + theme_minimal()
  + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
  + facet_wrap(parti_kort ~ ., scales="free_y")
- + labs(title="Oppslutning per parti i bydeler", subtitle="Bydeler sortert etter gjennomsnittsinntekt", y="Stemmeandel", x="Bydel", color="År")
+ + labs(title="Stemmeandel per parti i bydelsvalg, 2019→2023", subtitle="Bydeler sortert etter gjennomsnittsinntekt", y="Stemmeandel", x="Bydel", color="År")
  )
 ```
+
 
 
 
@@ -127,4 +129,31 @@ df <- dftmp |> group_by(year, bydel) |> summarise(total_stemmer = sum(stemmer), 
  + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
  + facet_wrap(parti_kort ~ ., scales="free_y")
  )
+```
+
+```{r fig.width=10}
+(ggplot(df |> mutate(year=fct_rev(as.factor(year))), aes(x=bydel, y=stemmer, colour=year))
+ + geom_point()
+ + geom_line(color="black", arrow = arrow(length = unit(0.15, "cm")), linewidth=0.2)
+ + scale_y_continuous(labels = scales::label_number(big.mark=" "), breaks=scales::pretty_breaks(4))
+ + expand_limits(y=0)
+ + theme_minimal()
+ + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ + facet_wrap(parti_kort ~ ., scales="free_y")
+ + labs(title="Stemmetall per parti i bydelsvalg, 2019→2023", subtitle="Bydeler sortert etter gjennomsnittsinntekt", y="Stemmer", x="Bydel", color="År")
+ )
+
+```
+
+```{r fig.width=6}
+(ggplot(df |> group_by(year, bydel) |> summarise(total_stemmer=mean(total_stemmer), .groups="drop")  |> mutate(year=fct_rev(as.factor(year))), aes(x=bydel, y=total_stemmer, colour=year))
+ + geom_point()
+ + geom_line(color="black", arrow = arrow(length = unit(0.15, "cm")), linewidth=0.2)
+ + scale_y_continuous(labels = scales::label_number(big.mark=" "), breaks=scales::pretty_breaks(4))
+ + expand_limits(y=0)
+ + theme_minimal()
+ + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ + labs(title="Totalt antall stemmer per bydel bydelsvalg, 2019→2023", subtitle="Bydeler sortert etter gjennomsnittsinntekt", y="Totale gyldige stemmer", x="Bydel", color="År")
+ )
+
 ```
